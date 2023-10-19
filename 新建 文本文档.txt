@@ -1,0 +1,302 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include <QDebug>
+
+
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    /****************************/
+    Chart_Init();
+
+    s_timer = new QTimer();
+    rec_timer = new QTimer();
+    connect(s_timer,SIGNAL(timeout()),this,SLOT(DrawLine()));
+ //   connect(s_timer,SIGNAL(TimeOut()),this,SLOT(TimeOut()));
+
+    /****************************/
+    QStringList serialPortName;
+    Serialport =new  QSerialPort(this);
+    connect(Serialport,SIGNAL(readyRead()),this,SLOT(serialportread()));
+    connect(rec_timer,SIGNAL(timeout()),this,SLOT(TimeRead()));
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+        serialPortName<<info.portName();
+    }
+    ui->serial_com->addItems(serialPortName);
+
+
+//    data_get();
+    iniGraph3D();
+
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::serialportread()
+{
+    rec_timer->start(100);
+    buf.append( Serialport->readAll());
+
+    bool ok;
+    buf1 = buf.toInt(&ok,10);
+
+}
+
+void MainWindow::iniGraph3D()
+{
+
+
+//    int data1=data_get1;
+    graph3D = new Q3DBars();
+    graphContainer = QWidget::createWindowContainer(graph3D);
+
+    graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetBehindHigh);
+//    qDebug() << data1;
+    //三维坐标轴
+    QValue3DAxis* axisV = new QValue3DAxis;
+    axisV->setTitle("value");
+    axisV->setTitleVisible(true);
+    axisV->setRange(0, 10);
+//    axisV->setMin(0);
+//    axisV->setMin(10);
+
+    QStringList rowLabs;
+    QStringList colLabs;
+    rowLabs << "row1" << "row2" << "row3"<< "row4";
+    colLabs << "col1" << "col2" << "col3" << "col4";
+
+    QCategory3DAxis* axisRow = new QCategory3DAxis;
+    axisRow->setTitle("row axis");
+    axisRow->setLabels(rowLabs);
+    axisRow->setTitleVisible(true);
+//    axisRow->setMin(0);
+//    axisRow->setMin(10);
+    QCategory3DAxis* axisCol = new QCategory3DAxis;
+    axisCol->setTitle("col axis");
+    axisCol->setLabels(colLabs);
+    axisCol->setTitleVisible(true);
+//    axisCol->setMin(0);
+//    axisCol->setMin(10);
+    //坐标轴添加到3D图表
+    graph3D->setValueAxis(axisV);
+    graph3D->setRowAxis(axisRow);
+    graph3D->setColumnAxis(axisCol);
+
+    //创建序列
+    series = new QBar3DSeries;
+    series->setMesh(QAbstract3DSeries::MeshCylinder);
+    series->setItemLabelFormat("(@rowLabel,@colLabel):%.1f");
+    graph3D->addSeries(series);
+
+    //数据集,每一项都是一行
+
+}
+void MainWindow::TimeRead()
+{
+    rec_timer->stop();
+    if (buf.length() != 0)
+    {
+        ui->rec_Edit->appendPlainText(buf);
+//        qDebug() << buf;
+
+        String_proess();
+    }
+    buf.clear();
+}
+
+void MainWindow::String_proess()
+{
+    QString str = buf;
+    QStringList lines = str.split(QRegExp("[\r\n]"), QString::SkipEmptyParts); // 使用换行符分割字符串
+
+    QList<int> numbers; // 存储提取到的数字
+    int dataline=lines.size();
+    qDebug() << "行数："<<dataline;
+    for (int i = 0; i < lines.size(); i++) {
+        QString line = lines[i].trimmed(); // 去除前后空格
+
+        // 如果字符串能够转换为数字，则添加到列表
+        bool ok;
+        int number = line.toInt(&ok);
+        if (ok) {
+            numbers.append(number);
+        }
+    }
+
+    // 打印提取到的数字
+    for (int i = 0; i < numbers.size(); i++) {
+        qDebug() << numbers[i];
+
+        ui->data1->setText(QString::number(numbers[0]));
+        ui->data2->setText(QString::number(numbers[1]));
+        ui->data3->setText(QString::number(numbers[2]));
+        ui->data4->setText(QString::number(numbers[3]));
+        ui->data5->setText(QString::number(numbers[4]));
+        ui->data6->setText(QString::number(numbers[5]));
+        ui->data7->setText(QString::number(numbers[6]));
+        ui->data8->setText(QString::number(numbers[7]));
+        ui->data9->setText(QString::number(numbers[8]));
+        ui->data10->setText(QString::number(numbers[9]));
+        ui->data11->setText(QString::number(numbers[10]));
+        ui->data12->setText(QString::number(numbers[11]));
+        ui->data13->setText(QString::number(numbers[12]));
+        ui->data14->setText(QString::number(numbers[13]));
+        ui->data15->setText(QString::number(numbers[14]));
+        ui->data16->setText(QString::number(numbers[15]));
+        data_get1=numbers[0];
+        data_get2=numbers[1];
+        data_get3=numbers[2];
+        data_get4=numbers[3];
+        data_get5=numbers[4];
+        data_get6=numbers[5];
+        data_get7=numbers[6];
+        data_get8=numbers[7];
+        data_get9=numbers[8];
+        data_get10=numbers[9];
+        data_get11=numbers[10];
+        data_get12=numbers[11];
+        data_get13=numbers[12];
+        data_get14=numbers[13];
+        data_get15=numbers[14];
+        data_get16=numbers[15];
+        qDebug() << "data_get1:"<<data_get1;
+        qDebug() << "data_get2:"<<data_get2;
+
+        QBarDataArray* dataSet = new QBarDataArray;
+    //    dataSet->reserve(rowLabs.count());
+        QBarDataRow *dataRow1 = new QBarDataRow;
+        *dataRow1 << data_get2<< data_get2<< data_get3<< data_get4; //第1行数据，有5列
+        dataSet->append(dataRow1);
+
+        QBarDataRow *dataRow2 = new QBarDataRow;
+        *dataRow2 << data_get5<< data_get6<< data_get7<< data_get8; //第2行数据，有5列
+        dataSet->append(dataRow2);
+        qDebug() << "data_get1:"<<data_get1;
+        qDebug() << "data_get2:"<<data_get2;
+        QBarDataRow *dataRow3 = new QBarDataRow;
+        *dataRow3 << data_get9<< data_get10<< data_get11<< data_get12; //第2行数据，有5列
+        dataSet->append(dataRow3);
+
+        QBarDataRow *dataRow4 = new QBarDataRow;
+        *dataRow4 << data_get13<< data_get14<< data_get15<< data_get16; //第2行数据，有5列
+        dataSet->append(dataRow4);
+
+        series->dataProxy()->resetArray(dataSet);
+        graph3D->show();
+
+        ui->mylayout->addWidget(graphContainer);
+    }
+}
+
+void MainWindow::TimeOut()
+{
+
+}
+
+void MainWindow::data_get()
+{
+
+}
+void MainWindow::Chart_Init()
+{
+    chart = new QChart();
+    splineserives = new QSplineSeries(this);
+    splineserives->setName("绘图");
+
+    chart->addSeries(splineserives);
+    QValueAxis *axisX = new QValueAxis();
+    QValueAxis *axisY = new QValueAxis();
+
+    axisX->setMin(0);
+    axisX->setMax(MAX_X);
+    axisY->setMin(-10);
+    axisY->setMax(MAX_Y);
+
+    axisX->setTickCount(10);
+    axisY->setTickCount(5);
+
+    QFont font("Microsoft YaHei",8,QFont::Normal);
+    axisX->setTitleFont(font);
+    axisY->setTitleFont(font);
+    axisX->setTitleText("X-Test");
+    axisY->setTitleText("Y-Test");
+    chart->addAxis(axisX,Qt::AlignBottom);
+    chart->addAxis(axisY,Qt::AlignLeft);
+
+    splineserives->attachAxis(axisX);
+    splineserives->attachAxis(axisY);
+    ui->graphicsView->setChart(chart);
+    ui->graphicsView->setRenderHint(QPainter::Antialiasing);
+}
+
+void MainWindow::DrawLine()
+{
+//    qreal x =plotArea().width()/axisX-tickCount();
+
+
+    static int count = 0;
+    if(count > MAX_X)
+    {
+        splineserives->removePoints(0,splineserives->count() - MAX_X);
+        chart->axisX()->setMin(count - MAX_X);
+        chart->axisX()->setMax(count);
+    }
+//    splineserives->append(count,rand()%65);
+    splineserives->append(count,buf1);
+    count++;
+
+}
+void MainWindow::on_cont_B_clicked()
+{
+    QSerialPort::DataBits Data_Bits;
+    QSerialPort::StopBits Stop_Bits;
+    QSerialPort::BaudRate Baud_Bits;
+    QSerialPort::Parity Parity_Bits;
+    if(ui->Baud_Text->currentText() == "9600")
+        Baud_Bits = QSerialPort::Baud9600;
+    else if(ui->Baud_Text->currentText() == "115200")
+            Baud_Bits = QSerialPort::Baud115200;
+    if(ui->Data_Text->currentText() == "8")
+        Data_Bits = QSerialPort::Data8;
+    else if(ui->Data_Text->currentText() == "7")
+        Data_Bits = QSerialPort::Data7;
+    else if(ui->Data_Text->currentText() == "6")
+        Data_Bits = QSerialPort::Data6;
+    else if(ui->Data_Text->currentText() == "5")
+        Data_Bits = QSerialPort::Data5;
+    if(ui->Stop_Text->currentText() == "1")
+        Stop_Bits = QSerialPort::OneStop;
+    else if(ui->Stop_Text->currentText() == "1.5")
+        Stop_Bits = QSerialPort::OneAndHalfStop;
+    else if(ui->Stop_Text->currentText() == "2")
+        Stop_Bits = QSerialPort::TwoStop;
+    if(ui->Parity_Text->currentText() == "1")
+        Parity_Bits = QSerialPort::NoParity;
+    Serialport->setPortName(ui->serial_com->currentText());
+    Serialport->setDataBits(Data_Bits);
+    Serialport->setParity(Parity_Bits);
+    Serialport->setStopBits(Stop_Bits);
+    Serialport->setBaudRate(Baud_Bits);
+    if(Serialport->open(QIODevice::ReadWrite) == true)
+    {
+        QMessageBox::information(this,"提示","连接成功");
+        s_timer->start(100);
+    }
+    else
+        QMessageBox::information(this,"提示","连接失败");
+}
+
+
+void MainWindow::on_Close_B_clicked()
+{
+    Serialport->close();
+    s_timer->stop();
+    QMessageBox::information(this,"提示","串口已关闭");
+}
+
